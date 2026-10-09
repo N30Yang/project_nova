@@ -10,6 +10,7 @@
 #include "movement-sequences.h"
 #include "captive-portal.h"
 #include "control-panel.h"
+#include "planet-display.h"
 #define AP_SSID  "Nova-Controller"
 #define AP_PASS  "12345678" 
 #define NETWORK_SSID ""  
@@ -715,6 +716,7 @@ void loop() {
   }
 }
 void updateFaceBitmap(const unsigned char* bitmap) {
+  if (planetDisplayActive()) return;   
   display.clearDisplay();
   display.drawBitmap(0, 0, bitmap, 128, 64, SSD1306_WHITE);
   display.display();
@@ -773,6 +775,7 @@ int getFaceFpsForName(const String& faceName) {
   return faceFps;
 }
 void updateAnimatedFace() {
+  if (planetDisplayActive()) { planetDisplayUpdate(); return; }   
   if (currentFaceFrames == nullptr || currentFaceFrameCount <= 1) return;
   if (currentFaceMode == FACE_ANIM_ONCE && faceAnimFinished) return;
   unsigned long now = millis();
@@ -886,6 +889,7 @@ void recordInput() {
   }
 }
 void updateWifiInfoScroll() {
+  if (planetDisplayActive()) return;   
   if (firstInputReceived) {
     if (showingWifiInfo) {
       showingWifiInfo = false;

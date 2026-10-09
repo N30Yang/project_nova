@@ -37,6 +37,8 @@ extern void setFaceMode(FaceAnimMode mode);
 extern void setFaceWithMode(const String& faceName, FaceAnimMode mode);
 extern void delayWithFace(unsigned long ms);
 extern void enterIdle();
+extern bool planetDisplayStart(const char* name);   
+extern void planetDisplayStop();                    
 extern bool pressingCheck(String cmd, int ms);
 void runRestPose();
 void runStandPose(int face = 1);
@@ -555,7 +557,9 @@ inline void runPlanetPose(const PlanetProfile& p) {
   Serial.print(F("PLANET ")); Serial.println(p.cmd);
   int savedMotorDelay = motorCurrentDelay;
   if (motorCurrentDelay < p.motorDelay) motorCurrentDelay = p.motorDelay;
+  planetDisplayStart(p.cmd);   
   if (runPlanetSequence(p)) runStandPose(1);
+  planetDisplayStop();         
   motorCurrentDelay = savedMotorDelay;
   if (currentCommand == p.cmd) currentCommand = "";
 }
