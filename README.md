@@ -14,12 +14,17 @@ Built on top of [dorianborian/sesame-robot](https://github.com/dorianborian/sesa
 | [firmware/](firmware/) | Modified Nova firmware files (planet animations, web buttons, serial shortcuts) |
 | [panel/](panel/) | OLED planet-viewer sketch (Earth, Mars, Moon, Saturn, Jupiter) with servo |
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
+| [docs/firmware-setup.md](docs/firmware-setup.md) | Install toolchain, pick board pins, build, flash, Wi-Fi, API test |
+| [docs/motor-testing.md](docs/motor-testing.md) | Servo test and leg calibration before assembly |
+| [tools/firmware.py](tools/firmware.py), [tools/api-test.py](tools/api-test.py) | Setup/build/flash script and JSON API smoke test |
+| [tests/](tests/) | pytest tests for the tools (`python -m pytest tests`) |
 | [tools/planet-sim/](tools/planet-sim/) | Offline simulator that runs the real animation code against a fake clock |
 
 ## Firmware files
 
-These are the four files changed in the upstream repo. Copy them over the matching
-files in `nova-robot/firmware/` (the other upstream files are not needed to review).
+The three files below are the ones changed from upstream. `face-bitmaps.h` and
+`debugging-firmware/motor-tester.ino` are unmodified upstream files (Apache-2.0)
+so the repo now builds and flashes on its own: see [docs/firmware-setup.md](docs/firmware-setup.md).
 
 - `movement-sequences.h`: the PLANETS block (all tuning numbers at the top)
 - `firmware-main.ino`: `moon`/`mars`/`earth`/`jupiter` dispatch and `rn mo|ma|ea|ju`
