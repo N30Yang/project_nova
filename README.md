@@ -11,7 +11,8 @@ We are building a Nova ESP32 quadruped robot that acts how it would move under t
 | [CHECKLIST.md](CHECKLIST.md) | Everything to do before, during and after the demo |
 | [firmware/](firmware/) | Nova firmware files (planet animations, web buttons, serial shortcuts) |
 | [panel/](panel/) | OLED planet-viewer sketch (Earth, Mars, Moon, Saturn, Jupiter) with servo |
-| [panel/controller_template.html](panel/controller_template.html) | The Nova control panel: built into the firmware and served at http://192.168.4.1 |
+| [panel/ui-new.html](panel/ui-new.html) | The Nova control panel: built into the firmware and served at http://192.168.4.1 |
+| [panel/controller_template.html](panel/controller_template.html) | The earlier, styled control panel. Not built into the firmware any more |
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
 | [docs/firmware-setup.md](docs/firmware-setup.md) | Install toolchain, pick board pins, build, flash, Wi-Fi, API test |
 | [docs/motor-testing.md](docs/motor-testing.md) | Servo test and leg calibration before assembly |

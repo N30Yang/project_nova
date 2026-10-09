@@ -27,7 +27,7 @@ import embed_panel
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIRMWARE_DIR = REPO_ROOT / "firmware"
 MOTOR_TESTER = FIRMWARE_DIR / "debugging-firmware" / "motor-tester.ino"
-PANEL_SOURCE = REPO_ROOT / "panel" / "controller_template.html"
+PANEL_SOURCE = REPO_ROOT / "panel" / "ui-new.html"
 BUILD_DIR = REPO_ROOT / ".build"
 MAIN_SKETCH = "firmware-main"
 TESTER_SKETCH = "motor-tester"

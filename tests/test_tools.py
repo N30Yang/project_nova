@@ -325,7 +325,7 @@ class TestCors:
             api_test.check_cors("http://127.0.0.1:1")
 class TestPanelEmbedding:
     def test_embedded_header_matches_panel_source(self):
-        """Fails if panel/controller_template.html changed without re-embedding."""
+        """Fails if the panel source (panel/ui-new.html) changed without re-embedding."""
         assert firmware.embed_panel.main([str(firmware.PANEL_SOURCE), "--check"]) == 0
     def test_build_and_upload_refresh_the_panel(self, monkeypatch):
         refreshed = []
