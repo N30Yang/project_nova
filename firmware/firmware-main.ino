@@ -65,10 +65,16 @@ Servo servos[8];
 const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};
 const int SERVO_MIN_PULSE_US = 544;
 const int SERVO_MAX_PULSE_US = 2400;
+const int SERVO_MIN_ANGLE = 10;
+const int SERVO_MAX_ANGLE = 170;
+const int MAX_SERVOS_MOVING = 2;
+const int SERVO_MS_PER_DEGREE = 3;       
+int servoLastAngle[8] = {-1, -1, -1, -1, -1, -1, -1, -1};   
+unsigned long servoBusyUntil[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int8_t servoSubtrim[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int frameDelay = 100;
 int walkCycles = 10;
-int motorCurrentDelay = 20; 
+int motorCurrentDelay = 40; 
 struct FaceEntry {
   const char* name;
   const unsigned char* const* frames;
@@ -887,9 +893,23 @@ void updateIdleBlink() {
     }
   }
 }
+int servosMoving() {
+  unsigned long now = millis();
+  int moving = 0;
+  for (int i = 0; i < 8; i++) {
+    if ((long)(servoBusyUntil[i] - now) > 0) moving++;
+  }
+  return moving;
+}
 void setServoAngle(uint8_t channel, int angle) { 
   if (channel < 8) {
-    int adjustedAngle = constrain(angle + servoSubtrim[channel], 0, 180);
+    int adjustedAngle = constrain(angle + servoSubtrim[channel], SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
+    if (adjustedAngle != servoLastAngle[channel]) {
+      while (servosMoving() >= MAX_SERVOS_MOVING) delayWithFace(5);
+      int travel = (servoLastAngle[channel] < 0) ? 180 : abs(adjustedAngle - servoLastAngle[channel]);
+      servoBusyUntil[channel] = millis() + (unsigned long)travel * SERVO_MS_PER_DEGREE;
+      servoLastAngle[channel] = adjustedAngle;
+    }
     servos[channel].write(adjustedAngle);
     delayWithFace(motorCurrentDelay);
   }

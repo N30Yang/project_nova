@@ -609,7 +609,7 @@ function openSettings() {
   fetch('/getSettings').then(r => r.json()).then(data => {
     document.getElementById('frameDelay').value = data.frameDelay || 100;
     document.getElementById('walkCycles').value = data.walkCycles || 10;
-    document.getElementById('motorCurrentDelay').value = data.motorCurrentDelay || 20;
+    document.getElementById('motorCurrentDelay').value = data.motorCurrentDelay || 40;
     document.getElementById('motorSpeed').value = data.motorSpeed || 'medium';
     const savedColor = localStorage.getItem('themeColor') || '#ff8c42';
     const colorSelect = document.getElementById('themeColor');
@@ -631,7 +631,7 @@ function openSettings() {
   }).catch(() => {
     document.getElementById('frameDelay').value = 100;
     document.getElementById('walkCycles').value = 10;
-    document.getElementById('motorCurrentDelay').value = 20;
+    document.getElementById('motorCurrentDelay').value = 40;
     const savedColor = localStorage.getItem('themeColor') || '#ff8c42';
     document.getElementById('themeColor').value = savedColor;
     document.getElementById('settingsPanel').style.display = 'block';
