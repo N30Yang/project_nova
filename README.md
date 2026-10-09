@@ -31,8 +31,12 @@ so the repo now builds and flashes on its own: see [docs/firmware-setup.md](docs
 - `movement-sequences.h`: the PLANETS block (all tuning numbers at the top)
 - `firmware-main.ino`: `moon`/`mars`/`earth`/`jupiter` dispatch and `rn mo|ma|ea|ju`
 - `captive-portal.h`: Planets buttons, slider lock fix on STOP
+- `planet-display.h` (new): while a planet pose runs, the OLED shows that planet spinning instead of the
+  robot's face. When the pose ends or STOP is pressed the normal face returns. Textures and the sphere
+  renderer are the same ones as in `panel/`.
 
-All numbers are UNTESTED on hardware.
+All numbers are UNTESTED on hardware. The OLED planet display compiles and the simulator passes, but it has
+not run on the robot yet.
 
 ## Run the simulator
 

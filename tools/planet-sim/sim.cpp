@@ -52,6 +52,8 @@ void setFace(const String& n) { facesUsed.push_back(n.c_str()); }
 void setFaceMode(FaceAnimMode) {}
 void setFaceWithMode(const String& n, FaceAnimMode) { setFace(n); }
 void enterIdle() {}
+bool planetDisplayStart(const char*) { return true; }   
+void planetDisplayStop() {}
 static int failures = 0;
 #define CHECK(cond, ...) do { if (!(cond)) { failures++; std::printf("  FAIL: "); std::printf(__VA_ARGS__); std::printf("\n"); } } while (0)
 static const int STAND[8] = {135, 45, 45, 135, 0, 180, 0, 180};  
