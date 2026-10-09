@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Set up, build and flash the Nova/Nova firmware with arduino-cli.
+"""Set up, build and flash the Nova firmware with arduino-cli.
 The firmware sources in firmware/ are never modified. For each build the
 sketch is copied to a temp folder and the board pin block is patched in the
 copy only.

@@ -4,14 +4,14 @@
 would move under the gravity of the Moon, Mars, Earth and Jupiter, triggered from
 the robot's phone web page.
 
-Built on top of [dorianborian/sesame-robot](https://github.com/dorianborian/sesame-robot).
+Nova is built on top of the open-source Nova robot, [dorianborian/sesame-robot](https://github.com/dorianborian/sesame-robot).
 
 ## Layout
 
 | Path | What |
 |---|---|
 | [CHECKLIST.md](CHECKLIST.md) | Everything to do before, during and after the demo |
-| [firmware/](firmware/) | Modified Nova firmware files (planet animations, web buttons, serial shortcuts) |
+| [firmware/](firmware/) | Nova firmware files (modified upstream Nova firmware) (planet animations, web buttons, serial shortcuts) |
 | [panel/](panel/) | OLED planet-viewer sketch (Earth, Mars, Moon, Saturn, Jupiter) with servo |
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
 | [docs/firmware-setup.md](docs/firmware-setup.md) | Install toolchain, pick board pins, build, flash, Wi-Fi, API test |
