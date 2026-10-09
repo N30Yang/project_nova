@@ -12,7 +12,7 @@ int frameDelay = 100;
 int walkCycles = 10;
 int motorCurrentDelay = 20;
 String currentCommand = "";
-struct Ev { long t; char kind; int ch; int val; };  
+struct Ev { long t; char kind; int ch; int val; };
 static long simNow = 0;
 static int angles[8];
 static std::vector<Ev> trace;
@@ -52,11 +52,11 @@ void setFace(const String& n) { facesUsed.push_back(n.c_str()); }
 void setFaceMode(FaceAnimMode) {}
 void setFaceWithMode(const String& n, FaceAnimMode) { setFace(n); }
 void enterIdle() {}
-bool planetDisplayStart(const char*) { return true; }   
+bool planetDisplayStart(const char*) { return true; }
 void planetDisplayStop() {}
 static int failures = 0;
 #define CHECK(cond, ...) do { if (!(cond)) { failures++; std::printf("  FAIL: "); std::printf(__VA_ARGS__); std::printf("\n"); } } while (0)
-static const int STAND[8] = {135, 45, 45, 135, 0, 180, 0, 180};  
+static const int STAND[8] = {135, 45, 45, 135, 0, 180, 0, 180};
 static const char* FACES_WITH_BITMAPS[] = {
   "walk", "rest", "swim", "dance", "wave", "point", "stand", "cute", "pushup", "freaky", "bow", "worm",
   "shake", "shrug", "dead", "crab", "idle", "idle_blink", "happy", "sad", "angry", "surprised", "sleepy",
@@ -107,7 +107,7 @@ static void checkWalkCopy() {
   frameDelay = dwell; walkCycles = cycles; currentCommand = "forward";
   runWalkPose();
   std::vector<Ev> ref = stripTimes(trace);
-  ref.resize(ref.size() - 8);  
+  ref.resize(ref.size() - 8);
   PlanetProfile p = PLANET_PROFILES[2];
   p.cmd = "forward"; p.tempo = 1.0f; p.walkCycles = cycles;
   resetRun();
@@ -127,7 +127,7 @@ static RunResult runPlanet(int idx, long interruptMs, const char* interruptCmd) 
   const PlanetProfile& p = PLANET_PROFILES[idx];
   resetRun();
   frameDelay = 100; walkCycles = 10;
-  currentCommand = p.cmd;  
+  currentCommand = p.cmd;
   if (interruptMs >= 0) { interruptAt = interruptMs; interruptTo = interruptCmd; }
   void (*fns[])() = {runMoonPose, runMarsPose, runEarthPose, runJupiterPose};
   fns[idx]();
@@ -135,7 +135,7 @@ static RunResult runPlanet(int idx, long interruptMs, const char* interruptCmd) 
 }
 static void checkAnglesAndFaces(const char* name) {
   for (int i = 0; i < 8; i++) {
-    if (rawMax[i] < 0) continue;  
+    if (rawMax[i] < 0) continue;
     CHECK(rawMin[i] >= 0 && rawMax[i] <= 180, "%s: %s requested %d..%d (outside 0..180)",
           name, ServoNames[i].c_str(), rawMin[i], rawMax[i]);
     CHECK(rawMin[i] >= stockMin[i] && rawMax[i] <= stockMax[i],
