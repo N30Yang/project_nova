@@ -20,9 +20,14 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional, Sequence
+TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+import embed_panel
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIRMWARE_DIR = REPO_ROOT / "firmware"
 MOTOR_TESTER = FIRMWARE_DIR / "debugging-firmware" / "motor-tester.ino"
+PANEL_SOURCE = REPO_ROOT / "panel" / "controller_template.html"
 BUILD_DIR = REPO_ROOT / ".build"
 MAIN_SKETCH = "firmware-main"
 TESTER_SKETCH = "motor-tester"
@@ -113,6 +118,12 @@ def stage_tester_sketch(workdir: Path, board: Board) -> Path:
     ino = sketch / f"{TESTER_SKETCH}.ino"
     ino.write_text(patch_pins(MOTOR_TESTER.read_text(encoding="utf-8"), board), encoding="utf-8")
     return sketch
+def refresh_panel_header() -> None:
+    """Re-embed the control panel so the robot never serves a stale page."""
+    try:
+        embed_panel.build(PANEL_SOURCE, embed_panel.DEFAULT_OUT, check=False)
+    except embed_panel.EmbedError as err:
+        raise ToolError(f"control panel: {err}") from err
 def cmd_setup(args: argparse.Namespace) -> int:
     cli = find_cli(args.cli)
     if args.reset_config:
@@ -166,9 +177,11 @@ def build_or_flash(
     run_cli(cli, *compile_args, str(sketch))
     print("\nUpload complete." if upload else "\nBuild OK.")
 def cmd_build(args: argparse.Namespace) -> int:
+    refresh_panel_header()
     build_or_flash(args, stage_main_sketch, upload=False)
     return 0
 def cmd_upload(args: argparse.Namespace) -> int:
+    refresh_panel_header()
     build_or_flash(args, stage_main_sketch, upload=True)
     return 0
 def cmd_motors(args: argparse.Namespace) -> int:

@@ -143,11 +143,13 @@ class TestCliCommands:
     @pytest.fixture
     def calls(self, monkeypatch):
         recorded = []
+        recorded_panel = self.recorded_panel = []
         def fake_run_cli(cli, *args, capture=False):
             recorded.append(args)
             return self.ports_json if capture else ""
         self.ports_json = '{"detected_ports": []}'
         monkeypatch.setattr(firmware, "run_cli", fake_run_cli)
+        monkeypatch.setattr(firmware, "refresh_panel_header", lambda: recorded_panel.append(1))
         monkeypatch.setattr(firmware, "find_cli", lambda explicit: "arduino-cli")
         return recorded
     def test_setup_installs_core_and_pinned_libs(self, calls):
@@ -314,3 +316,29 @@ class TestCors:
     def test_unreachable(self):
         with pytest.raises(api_test.ApiError, match="cannot reach"):
             api_test.check_cors("http://127.0.0.1:1")
+class TestPanelEmbedding:
+    def test_embedded_header_matches_panel_source(self):
+        """Fails if panel/controller_template.html changed without re-embedding."""
+        assert firmware.embed_panel.main([str(firmware.PANEL_SOURCE), "--check"]) == 0
+    def test_build_and_upload_refresh_the_panel(self, monkeypatch):
+        refreshed = []
+        monkeypatch.setattr(firmware, "refresh_panel_header", lambda: refreshed.append(1))
+        monkeypatch.setattr(firmware, "run_cli", lambda *a, **k: "")
+        monkeypatch.setattr(firmware, "find_cli", lambda explicit: "arduino-cli")
+        firmware.main(["build", "--board", "devkit"])
+        firmware.main(["upload", "--board", "devkit", "--port", "COM5"])
+        assert len(refreshed) == 2
+    def test_refresh_reports_embed_errors(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(firmware, "PANEL_SOURCE", tmp_path / "missing.html")
+        with pytest.raises(firmware.ToolError, match="control panel"):
+            firmware.refresh_panel_header()
+    def test_panel_posts_only_to_known_robot_endpoints(self):
+        """Every URL the panel can request must exist in the firmware."""
+        html = firmware.PANEL_SOURCE.read_text(encoding="utf-8")
+        ino = (FIRMWARE / "firmware-main.ino").read_text(encoding="utf-8")
+        for path in ("/cmd?", "/setSettings?"):
+            assert path in html
+            assert f'server.on("{path.rstrip("?")}"' in ino
+    def test_panel_has_no_external_resources(self):
+        html = firmware.PANEL_SOURCE.read_text(encoding="utf-8")
+        assert firmware.embed_panel.external_references(html) == []
