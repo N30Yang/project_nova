@@ -24,7 +24,7 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     String input = Serial.readStringUntil('\n');
-    input.trim(); 
+    input.trim();
     if (input.length() == 0) return;
     if (input.equalsIgnoreCase("stop")) {
       stopMotors();

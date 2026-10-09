@@ -3,6 +3,7 @@
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <Wire.h>
+#include <Preferences.h>
 #include <ESP32Servo.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -12,10 +13,10 @@
 #include "control-panel.h"
 #include "planet-display.h"
 #define AP_SSID  "Nova-Controller"
-#define AP_PASS  "12345678" 
-#define NETWORK_SSID ""  
-#define NETWORK_PASS ""  
-#define ENABLE_NETWORK_MODE false  
+#define AP_PASS  "12345678"
+#define NETWORK_SSID ""
+#define NETWORK_PASS ""
+#define ENABLE_NETWORK_MODE false
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
@@ -55,12 +56,12 @@ enum WifiSetupState { WIFI_SETUP_IDLE, WIFI_SETUP_QUEUED, WIFI_SETUP_CONNECTING 
 WifiSetupState wifiSetupState = WIFI_SETUP_IDLE;
 String wifiSetupSsid = "";
 String wifiSetupPass = "";
-String wifiSetupError = "";          
+String wifiSetupError = "";
 unsigned long wifiSetupQueuedMs = 0;
 unsigned long wifiSetupStartMs = 0;
-bool wifiRestoreApOnly = false;      
+bool wifiRestoreApOnly = false;
 const uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
-const uint32_t WIFI_SETUP_START_DELAY_MS = 300;  
+const uint32_t WIFI_SETUP_START_DELAY_MS = 300;
 Servo servos[8];
 const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};
 const int SERVO_MIN_PULSE_US = 544;
@@ -68,13 +69,24 @@ const int SERVO_MAX_PULSE_US = 2400;
 const int SERVO_MIN_ANGLE = 10;
 const int SERVO_MAX_ANGLE = 170;
 const int MAX_SERVOS_MOVING = 2;
-const int SERVO_MS_PER_DEGREE = 3;       
-int servoLastAngle[8] = {-1, -1, -1, -1, -1, -1, -1, -1};   
+const int SERVO_MS_PER_DEGREE = 3;
+int slowFactor = 5;
+int servoTarget[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+float servoPos[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 unsigned long servoBusyUntil[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+unsigned long lastServoUpdateMs = 0;
+int servoMinAngle[8] = {SERVO_MIN_ANGLE, SERVO_MIN_ANGLE, SERVO_MIN_ANGLE, SERVO_MIN_ANGLE,
+                        SERVO_MIN_ANGLE, SERVO_MIN_ANGLE, SERVO_MIN_ANGLE, SERVO_MIN_ANGLE};
+int servoMaxAngle[8] = {SERVO_MAX_ANGLE, SERVO_MAX_ANGLE, SERVO_MAX_ANGLE, SERVO_MAX_ANGLE,
+                        SERVO_MAX_ANGLE, SERVO_MAX_ANGLE, SERVO_MAX_ANGLE, SERVO_MAX_ANGLE};
+const int SERVO_MIN_RANGE = 20;
+const bool SERVO_REVERSED_DEFAULT[8] = {true, true, true, true, false, false, false, false};
+bool servoReversed[8] = {true, true, true, true, false, false, false, false};
+Preferences prefs;
 int8_t servoSubtrim[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int frameDelay = 100;
 int walkCycles = 10;
-int motorCurrentDelay = 40; 
+int motorCurrentDelay = 40;
 struct FaceEntry {
   const char* name;
   const unsigned char* const* frames;
@@ -151,6 +163,9 @@ void exitIdle();
 void updateIdleBlink();
 int getFaceFpsForName(const String& faceName);
 bool pressingCheck(String cmd, int ms);
+void waitWithFace(unsigned long ms);
+void updateServos();
+void moveServoRaw(uint8_t channel, int raw);
 void handleGetSettings();
 void handleSetSettings();
 void handleGetStatus();
@@ -182,14 +197,14 @@ void handleCommandWeb() {
     currentCommand = server.arg("pose");
     recordInput();
     exitIdle();
-    server.send(200, "text/plain", "OK"); 
-  } 
+    server.send(200, "text/plain", "OK");
+  }
   else if (server.hasArg("go")) {
     currentCommand = server.arg("go");
     recordInput();
     exitIdle();
     server.send(200, "text/plain", "OK");
-  } 
+  }
   else if (server.hasArg("stop")) {
     currentCommand = "";
     recordInput();
@@ -200,7 +215,7 @@ void handleCommandWeb() {
     int servoIdx = servoNameToIndex(server.arg("motor"));
     int angle = server.arg("value").toInt();
     if (motorNum >= 1 && motorNum <= 8 && angle >= 0 && angle <= 180) {
-      setServoAngle(motorNum - 1, angle); 
+      setServoAngle(motorNum - 1, angle);
       recordInput();
       server.send(200, "text/plain", "OK");
     } else if (servoIdx != -1 && angle >= 0 && angle <= 180) {
@@ -220,7 +235,8 @@ void handleGetSettings() {
   json += "\"frameDelay\":" + String(frameDelay) + ",";
   json += "\"walkCycles\":" + String(walkCycles) + ",";
   json += "\"motorCurrentDelay\":" + String(motorCurrentDelay) + ",";
-  json += "\"faceFps\":" + String(faceFps);
+  json += "\"faceFps\":" + String(faceFps) + ",";
+  json += "\"slowFactor\":" + String(slowFactor);
   json += "}";
   server.send(200, "application/json", json);
 }
@@ -241,11 +257,13 @@ void handleSetSettings() {
   int newWalkCycles = walkCycles;
   int newMotorCurrentDelay = motorCurrentDelay;
   int newFaceFps = faceFps;
+  int newSlowFactor = slowFactor;
   bool ok = true;
   if (server.hasArg("frameDelay")) ok = readSetting("frameDelay", 1, 1000, newFrameDelay) && ok;
   if (server.hasArg("walkCycles")) ok = readSetting("walkCycles", 1, 50, newWalkCycles) && ok;
   if (server.hasArg("motorCurrentDelay")) ok = readSetting("motorCurrentDelay", 0, 500, newMotorCurrentDelay) && ok;
   if (server.hasArg("faceFps")) ok = readSetting("faceFps", 1, 30, newFaceFps) && ok;
+  if (server.hasArg("slowFactor")) ok = readSetting("slowFactor", 1, 10, newSlowFactor) && ok;
   if (!ok) {
     server.send(400, "text/plain", "Invalid setting");
     return;
@@ -254,7 +272,152 @@ void handleSetSettings() {
   walkCycles = newWalkCycles;
   motorCurrentDelay = newMotorCurrentDelay;
   faceFps = newFaceFps;
+  slowFactor = newSlowFactor;
   server.send(200, "text/plain", "OK");
+}
+void saveCalibration() {
+  uint8_t mins[8], maxs[8], revs[8];
+  int8_t trims[8];
+  for (int i = 0; i < 8; i++) {
+    mins[i] = (uint8_t)servoMinAngle[i];
+    maxs[i] = (uint8_t)servoMaxAngle[i];
+    trims[i] = servoSubtrim[i];
+    revs[i] = servoReversed[i] ? 1 : 0;
+  }
+  prefs.begin("nova", false);
+  prefs.putBytes("min", mins, 8);
+  prefs.putBytes("max", maxs, 8);
+  prefs.putBytes("trim", trims, 8);
+  prefs.putBytes("rev", revs, 8);
+  prefs.end();
+}
+void loadCalibration() {
+  uint8_t mins[8], maxs[8], revs[8];
+  int8_t trims[8];
+  prefs.begin("nova", true);
+  bool found = prefs.getBytes("min", mins, 8) == 8 && prefs.getBytes("max", maxs, 8) == 8 &&
+               prefs.getBytes("trim", trims, 8) == 8;
+  bool foundRev = prefs.getBytes("rev", revs, 8) == 8;
+  prefs.end();
+  if (foundRev) {
+    for (int i = 0; i < 8; i++) servoReversed[i] = revs[i] != 0;
+  }
+  if (!found) return;
+  for (int i = 0; i < 8; i++) {
+    if (maxs[i] > 180 || mins[i] + SERVO_MIN_RANGE > maxs[i] || trims[i] < -90 || trims[i] > 90) continue;
+    servoMinAngle[i] = mins[i];
+    servoMaxAngle[i] = maxs[i];
+    servoSubtrim[i] = trims[i];
+  }
+}
+int motorArgToIndex() {
+  String arg = server.arg("motor");
+  int idx = servoNameToIndex(arg);
+  if (idx != -1) return idx;
+  int n = arg.toInt();
+  return (n >= 1 && n <= 8) ? n - 1 : -1;
+}
+String intArrayJson(const int* values) {
+  String json = "[";
+  for (int i = 0; i < 8; i++) json += String(values[i]) + (i < 7 ? "," : "");
+  return json + "]";
+}
+void sendCalibration() {
+  int trims[8], revs[8];
+  for (int i = 0; i < 8; i++) {
+    trims[i] = servoSubtrim[i];
+    revs[i] = servoReversed[i] ? 1 : 0;
+  }
+  String json = "{\"raw\":" + intArrayJson(servoTarget) + ",\"min\":" + intArrayJson(servoMinAngle) +
+                ",\"max\":" + intArrayJson(servoMaxAngle) + ",\"trim\":" + intArrayJson(trims) +
+                ",\"rev\":" + intArrayJson(revs) + "}";
+  server.send(200, "application/json", json);
+}
+void handleCalib() {
+  sendCalibration();
+}
+void handleCalibStart() {
+  currentCommand = "";
+  recordInput();
+  exitIdle();
+  for (int i = 0; i < 8; i++) moveServoRaw(i, 90);
+  sendCalibration();
+}
+void handleJog() {
+  int idx = motorArgToIndex();
+  long delta = server.arg("delta").toInt();
+  if (idx == -1 || delta < -180 || delta > 180 || delta == 0) {
+    server.send(400, "text/plain", "Invalid motor or delta");
+    return;
+  }
+  recordInput();
+  int rawNow = servoTarget[idx] < 0 ? 90 : servoTarget[idx];
+  if (server.arg("raw") == "1") {
+    moveServoRaw(idx, constrain(rawNow + (int)delta, 0, 180));
+  } else {
+    int poseNow = rawNow - servoSubtrim[idx];
+    if (servoReversed[idx]) poseNow = 180 - poseNow;
+    setServoAngle(idx, poseNow + (int)delta);
+  }
+  sendCalibration();
+}
+void handleCalibSet() {
+  int idx = motorArgToIndex();
+  String what = server.arg("what");
+  if (what == "reverse" && (idx != -1 || server.arg("motor") == "all")) {
+    for (int i = 0; i < 8; i++) {
+      if (idx == -1 || i == idx) servoReversed[i] = !servoReversed[i];
+    }
+    saveCalibration();
+    sendCalibration();
+    return;
+  }
+  if (idx == -1) {
+    server.send(400, "text/plain", "Invalid motor");
+    return;
+  }
+  if (servoTarget[idx] < 0) {
+    server.send(400, "text/plain", "Move the joint first");
+    return;
+  }
+  int raw = servoTarget[idx];
+  if (what == "min") {
+    if (raw + SERVO_MIN_RANGE > servoMaxAngle[idx]) {
+      server.send(400, "text/plain", "Too close to this joint's max");
+      return;
+    }
+    servoMinAngle[idx] = raw;
+  } else if (what == "max") {
+    if (raw - SERVO_MIN_RANGE < servoMinAngle[idx]) {
+      server.send(400, "text/plain", "Too close to this joint's min");
+      return;
+    }
+    servoMaxAngle[idx] = raw;
+  } else if (what == "center") {
+    servoSubtrim[idx] = (int8_t)constrain(raw - 90, -90, 90);
+  } else {
+    server.send(400, "text/plain", "what must be min, max, center or reverse");
+    return;
+  }
+  saveCalibration();
+  sendCalibration();
+}
+void handleCalibReset() {
+  int idx = motorArgToIndex();
+  bool all = server.arg("motor") == "all";
+  if (idx == -1 && !all) {
+    server.send(400, "text/plain", "Invalid motor");
+    return;
+  }
+  for (int i = 0; i < 8; i++) {
+    if (!all && i != idx) continue;
+    servoMinAngle[i] = SERVO_MIN_ANGLE;
+    servoMaxAngle[i] = SERVO_MAX_ANGLE;
+    servoSubtrim[i] = 0;
+    servoReversed[i] = SERVO_REVERSED_DEFAULT[i];
+  }
+  saveCalibration();
+  sendCalibration();
 }
 void handleGetStatus() {
   String json = "{";
@@ -370,13 +533,13 @@ void setApOnlyInfoText() {
 }
 void showWifiInfoNow() {
   firstInputReceived = false;
-  lastInputTime = millis() - 30000;  
-  showingWifiInfo = false;           
+  lastInputTime = millis() - 30000;
+  showingWifiInfo = false;
 }
 bool connectToWifi(const String& ssid, const String& pass, uint32_t timeoutMs) {
   if (ssid.length() == 0) return false;
   Serial.println("Connecting to WiFi network: " + ssid);
-  WiFi.mode(WIFI_AP_STA);                 
+  WiFi.mode(WIFI_AP_STA);
   WiFi.setHostname(deviceHostname.c_str());
   WiFi.begin(ssid.c_str(), pass.c_str());
   unsigned long start = millis();
@@ -390,7 +553,7 @@ bool connectToWifi(const String& ssid, const String& pass, uint32_t timeoutMs) {
   Serial.println();
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi connect failed.");
-    WiFi.disconnect();  
+    WiFi.disconnect();
     return false;
   }
   networkConnected = true;
@@ -401,7 +564,7 @@ bool connectToWifi(const String& ssid, const String& pass, uint32_t timeoutMs) {
 }
 void finishWifiSetup(const String& err) {
   wifiSetupError = err;
-  wifiSetupPass = "";  
+  wifiSetupPass = "";
   wifiSetupState = WIFI_SETUP_IDLE;
 }
 void updateWifiSetup() {
@@ -449,9 +612,9 @@ void updateWifiSetup() {
                : (st == WL_CONNECT_FAILED) ? "Wrong password or connection rejected"
                                            : "Connection timed out";
     Serial.println("WiFi connect failed: " + err);
-    WiFi.disconnect();        
-    networkConnected = false; 
-    setApOnlyInfoText();      
+    WiFi.disconnect();
+    networkConnected = false;
+    setApOnlyInfoText();
     finishWifiSetup(err);
   }
 }
@@ -461,14 +624,14 @@ void handleWifiScan() {
     server.send(200, "application/json", "{\"scanning\":true}");
     return;
   }
-  if (n < 0) {  
+  if (n < 0) {
     if (wifiSetupState != WIFI_SETUP_IDLE) {
       server.send(200, "application/json", "{\"scanning\":true}");
       return;
     }
     if (WiFi.getMode() == WIFI_AP) {
-      WiFi.mode(WIFI_AP_STA);   
-      wifiRestoreApOnly = true; 
+      WiFi.mode(WIFI_AP_STA);
+      wifiRestoreApOnly = true;
     }
     WiFi.scanNetworks(true );
     server.send(200, "application/json", "{\"scanning\":true}");
@@ -509,7 +672,7 @@ void handleWifiConnect() {
   wifiSetupError = "";
   wifiSetupQueuedMs = millis();
   wifiSetupState = WIFI_SETUP_QUEUED;
-  wifiRestoreApOnly = false;  
+  wifiRestoreApOnly = false;
   server.send(200, "application/json", "{\"success\":true,\"pending\":true}");
 }
 void handleWifiStatus() {
@@ -562,7 +725,7 @@ void setup() {
   if (ENABLE_NETWORK_MODE && String(NETWORK_SSID).length() > 0) {
     if (!connectToWifi(NETWORK_SSID, NETWORK_PASS)) {
       Serial.println("Failed to connect to network. Running in AP-only mode.");
-      WiFi.mode(WIFI_AP); 
+      WiFi.mode(WIFI_AP);
     }
   } else {
     WiFi.mode(WIFI_AP);
@@ -585,7 +748,8 @@ void setup() {
   server.enableCORS(true);
   static const char* const corsPaths[] = {
     "/cmd", "/getSettings", "/setSettings", "/api/status", "/api/command",
-    "/api/wifi/scan", "/api/wifi/connect", "/api/wifi/status"
+    "/api/wifi/scan", "/api/wifi/connect", "/api/wifi/status",
+    "/api/jog", "/api/calib", "/api/calib/start", "/api/calib/set", "/api/calib/reset"
   };
   for (const char* path : corsPaths) server.on(path, HTTP_OPTIONS, handlePreflight);
   server.on("/", handleRoot);
@@ -598,8 +762,14 @@ void setup() {
   server.on("/api/wifi/scan", handleWifiScan);
   server.on("/api/wifi/connect", handleWifiConnect);
   server.on("/api/wifi/status", handleWifiStatus);
+  server.on("/api/jog", handleJog);
+  server.on("/api/calib", handleCalib);
+  server.on("/api/calib/start", handleCalibStart);
+  server.on("/api/calib/set", handleCalibSet);
+  server.on("/api/calib/reset", handleCalibReset);
   server.onNotFound(handleNotFound);
   server.begin();
+  loadCalibration();
   ESP32PWM::allocateTimer(0);
   ESP32PWM::allocateTimer(1);
   ESP32PWM::allocateTimer(2);
@@ -619,6 +789,7 @@ void loop() {
   updateAnimatedFace();
   updateIdleBlink();
   updateWifiInfoScroll();
+  updateServos();
   if (currentCommand != "") {
     String cmd = currentCommand;
     if (cmd == "forward") runWalkPose();
@@ -749,7 +920,7 @@ void loop() {
   }
 }
 void updateFaceBitmap(const unsigned char* bitmap) {
-  if (planetDisplayActive()) return;   
+  if (planetDisplayActive()) return;
   display.clearDisplay();
   display.drawBitmap(0, 0, bitmap, 128, 64, SSD1306_WHITE);
   display.display();
@@ -808,7 +979,7 @@ int getFaceFpsForName(const String& faceName) {
   return faceFps;
 }
 void updateAnimatedFace() {
-  if (planetDisplayActive()) { planetDisplayUpdate(); return; }   
+  if (planetDisplayActive()) { planetDisplayUpdate(); return; }
   if (currentFaceFrames == nullptr || currentFaceFrameCount <= 1) return;
   if (currentFaceMode == FACE_ANIM_ONCE && faceAnimFinished) return;
   unsigned long now = millis();
@@ -845,14 +1016,18 @@ void updateAnimatedFace() {
     updateFaceBitmap(currentFaceFrames[currentFaceFrameIndex]);
   }
 }
-void delayWithFace(unsigned long ms) {
+void waitWithFace(unsigned long ms) {
   unsigned long start = millis();
   while (millis() - start < ms) {
     updateAnimatedFace();
     server.handleClient();
     dnsServer.processNextRequest();
+    updateServos();
     delay(5);
   }
+}
+void delayWithFace(unsigned long ms) {
+  waitWithFace(ms * slowFactor);
 }
 void scheduleNextIdleBlink(unsigned long minMs, unsigned long maxMs) {
   unsigned long now = millis();
@@ -876,7 +1051,7 @@ void updateIdleBlink() {
     if (millis() >= nextIdleBlinkMs) {
       idleBlinkActive = true;
       if (idleBlinkRepeatsLeft == 0 && random(0, 100) < 30) {
-        idleBlinkRepeatsLeft = 1; 
+        idleBlinkRepeatsLeft = 1;
       }
       setFaceWithMode("idle_blink", FACE_ANIM_ONCE);
     }
@@ -893,33 +1068,63 @@ void updateIdleBlink() {
     }
   }
 }
+void updateServos() {
+  unsigned long now = millis();
+  unsigned long elapsed = now - lastServoUpdateMs;
+  if (elapsed == 0) return;
+  lastServoUpdateMs = now;
+  if (elapsed > 100) elapsed = 100;
+  float step = (float)elapsed / (SERVO_MS_PER_DEGREE * slowFactor);
+  for (int i = 0; i < 8; i++) {
+    if (servoTarget[i] < 0 || servoPos[i] == servoTarget[i]) continue;
+    int before = (int)lroundf(servoPos[i]);
+    float diff = servoTarget[i] - servoPos[i];
+    if (fabsf(diff) <= step) servoPos[i] = servoTarget[i];
+    else servoPos[i] += (diff > 0) ? step : -step;
+    int after = (int)lroundf(servoPos[i]);
+    if (after != before) servos[i].write(after);
+  }
+}
 int servosMoving() {
   unsigned long now = millis();
   int moving = 0;
   for (int i = 0; i < 8; i++) {
-    if ((long)(servoBusyUntil[i] - now) > 0) moving++;
+    bool ramping = servoTarget[i] >= 0 && servoPos[i] != servoTarget[i];
+    if (ramping || (long)(servoBusyUntil[i] - now) > 0) moving++;
   }
   return moving;
 }
-void setServoAngle(uint8_t channel, int angle) { 
-  if (channel < 8) {
-    int adjustedAngle = constrain(angle + servoSubtrim[channel], SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
-    if (adjustedAngle != servoLastAngle[channel]) {
-      while (servosMoving() >= MAX_SERVOS_MOVING) delayWithFace(5);
-      int travel = (servoLastAngle[channel] < 0) ? 180 : abs(adjustedAngle - servoLastAngle[channel]);
-      servoBusyUntil[channel] = millis() + (unsigned long)travel * SERVO_MS_PER_DEGREE;
-      servoLastAngle[channel] = adjustedAngle;
+int movingLimit() {
+  return min(8, MAX_SERVOS_MOVING * slowFactor);
+}
+void moveServoRaw(uint8_t channel, int raw) {
+  if (channel >= 8) return;
+  raw = constrain(raw, 0, 180);
+  if (raw != servoTarget[channel]) {
+    while (servosMoving() >= movingLimit()) waitWithFace(5);
+    if (servoTarget[channel] < 0) {
+      servoPos[channel] = raw;
+      servos[channel].write(raw);
+      servoBusyUntil[channel] = millis() + 180UL * SERVO_MS_PER_DEGREE;
     }
-    servos[channel].write(adjustedAngle);
-    delayWithFace(motorCurrentDelay);
+    servoTarget[channel] = raw;
+  }
+  waitWithFace(motorCurrentDelay);
+}
+void setServoAngle(uint8_t channel, int angle) {
+  if (channel < 8) {
+    if (servoReversed[channel]) angle = 180 - angle;
+    moveServoRaw(channel, constrain(angle + servoSubtrim[channel], servoMinAngle[channel], servoMaxAngle[channel]));
   }
 }
 bool pressingCheck(String cmd, int ms) {
   unsigned long start = millis();
-  while (millis() - start < ms) {
+  unsigned long waitMs = (unsigned long)ms * slowFactor;
+  while (millis() - start < waitMs) {
     server.handleClient();
     dnsServer.processNextRequest();
     updateAnimatedFace();
+    updateServos();
     if (currentCommand != cmd) {
       runStandPose(1);
       return false;
@@ -936,7 +1141,7 @@ void recordInput() {
   }
 }
 void updateWifiInfoScroll() {
-  if (planetDisplayActive()) return;   
+  if (planetDisplayActive()) return;
   if (firstInputReceived) {
     if (showingWifiInfo) {
       showingWifiInfo = false;

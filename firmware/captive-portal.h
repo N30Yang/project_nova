@@ -18,18 +18,18 @@ const char index_html[] PROGMEM = R"rawliteral(
       -webkit-user-select: none;
       -webkit-touch-callout: none;
     }
-    body { 
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-      text-align: center; 
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
       background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
-      color: #e0e0e0; 
-      touch-action: manipulation; 
+      color: #e0e0e0;
+      touch-action: manipulation;
       margin: 0;
       padding: 10px;
       overflow-x: hidden;
       box-sizing: border-box;
     }
-    h2 { 
+    h2 {
       margin: 10px 0 20px 0;
       color: #fff;
       font-size: 32px;
@@ -71,78 +71,78 @@ const char index_html[] PROGMEM = R"rawliteral(
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    button { 
+    button {
       background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
-      border: none; 
-      color: #e0e0e0; 
-      padding: 15px; 
-      font-size: 18px; 
-      border-radius: 12px; 
-      cursor: pointer; 
+      border: none;
+      color: #e0e0e0;
+      padding: 15px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       transition: all 0.1s;
       font-weight: 500;
     }
-    button:active { 
+    button:active {
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      transform: translateY(2px); 
+      transform: translateY(2px);
     }
-    .dpad-container { 
-      display: flex; 
+    .dpad-container {
+      display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
       width: 100%;
     }
-    .dpad { 
-      display: grid; 
-      grid-template-columns: repeat(3, 1fr); 
-      grid-template-rows: repeat(2, 1fr); 
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
       gap: 12px;
       width: 100%;
       max-width: 294px;
       aspect-ratio: 3 / 2;
     }
-    .dpad button { 
-      font-size: 35px; 
-      border: 2px solid #555; 
+    .dpad button {
+      font-size: 35px;
+      border: 2px solid #555;
       color: #fff;
       width: 100%;
       height: 100%;
       min-height: 70px;
     }
-    .spacer { 
-      visibility: hidden; 
+    .spacer {
+      visibility: hidden;
     }
-    .grid { 
-      display: grid; 
-      grid-template-columns: repeat(3, 1fr); 
-      gap: 10px; 
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
-    .btn-pose { 
+    .btn-pose {
       background: linear-gradient(145deg, var(--content-color), var(--content-color-dark));
       padding: 12px 8px;
       font-size: 15px;
     }
-    .btn-pose:active { 
+    .btn-pose:active {
       background: linear-gradient(145deg, var(--content-color-dark), var(--content-color-darker));
     }
-    .btn-stop-all { 
+    .btn-stop-all {
       background: linear-gradient(145deg, #e63946, #c92a35);
-      width: 100%; 
-      font-size: 20px; 
-      padding: 18px; 
+      width: 100%;
+      font-size: 20px;
+      padding: 18px;
       box-shadow: 0 6px 12px rgba(230, 57, 70, 0.4);
       border: 2px solid #ff6b6b;
       color: #fff;
       text-transform: uppercase;
       letter-spacing: 2px;
     }
-    .btn-stop-all:active { 
+    .btn-stop-all:active {
       background: linear-gradient(145deg, #c92a35, #a8222c);
-      transform: translateY(3px); 
+      transform: translateY(3px);
     }
-    .btn-settings { 
+    .btn-settings {
       background: linear-gradient(145deg, #555, #444);
       padding: 12px 25px;
       font-size: 16px;
@@ -219,31 +219,31 @@ const char index_html[] PROGMEM = R"rawliteral(
       color: #2ecc71;
       background: rgba(46, 204, 113, 0.1);
     }
-    .settings-panel { 
-      display: none; 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: rgba(0,0,0,0.9); 
-      z-index: 100; 
+    .settings-panel {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
       backdrop-filter: blur(8px);
       overflow-y: auto;
     }
-    .settings-content { 
+    .settings-content {
       background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
-      border: 1px solid #444; 
-      max-width: 400px; 
-      margin: 30px auto; 
-      padding: 25px; 
-      border-radius: 20px; 
-      text-align: left; 
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+      border: 1px solid #444;
+      max-width: 400px;
+      margin: 30px auto;
+      padding: 25px;
+      border-radius: 20px;
+      text-align: left;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
-    .settings-content h3 { 
-      color: var(--content-color); 
-      margin-top: 0; 
+    .settings-content h3 {
+      color: var(--content-color);
+      margin-top: 0;
       text-align: center;
       font-size: 24px;
     }
@@ -260,38 +260,38 @@ const char index_html[] PROGMEM = R"rawliteral(
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .settings-content label { 
-      display: block; 
-      margin-top: 12px; 
-      font-weight: 500; 
+    .settings-content label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 500;
       color: #ccc;
       font-size: 13px;
     }
-    .settings-content input, 
-    .settings-content select { 
-      width: 100%; 
-      padding: 10px; 
-      margin-top: 5px; 
-      background: #333; 
-      color: #fff; 
-      border: 1px solid #555; 
-      border-radius: 8px; 
+    .settings-content input,
+    .settings-content select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 8px;
       box-sizing: border-box;
       font-size: 14px;
     }
-    .btn-save { 
+    .btn-save {
       background: linear-gradient(145deg, #2ecc71, #27ae60);
       box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
-      width: 100%; 
-      margin-top: 25px; 
-      color: #fff; 
+      width: 100%;
+      margin-top: 25px;
+      color: #fff;
     }
-    .btn-close { 
+    .btn-close {
       background: linear-gradient(145deg, #e74c3c, #c0392b);
       box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
-      width: 100%; 
-      margin-top: 12px; 
-      color: #fff; 
+      width: 100%;
+      margin-top: 12px;
+      color: #fff;
     }
     @media (min-width: 1024px) {
       body {
@@ -333,7 +333,6 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="command-queue" id="queueStatus">Command Queue: 0/3</div>
   <div class="sections-container">
     <div class="section-column">
-      <!-- Movement Control Section -->
       <div class="section">
     <div class="section-title">Movement Control</div>
     <div class="dpad-container">
@@ -348,7 +347,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       <button class="btn-stop-all" onclick="stop()">STOP ALL</button>
     </div>
   </div>
-      <!-- Poses & Animations Section -->
       <div class="section">
         <div class="section-title">Poses & Animations</div>
         <div class="grid">
@@ -369,7 +367,6 @@ const char index_html[] PROGMEM = R"rawliteral(
           <button class="btn-pose" onclick="pose('crab')">Crab</button>
         </div>
       </div>
-      <!-- Planets Section -->
       <div class="section">
         <div class="section-title">Planets</div>
         <div class="grid">
@@ -381,7 +378,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       </div>
     </div>
     <div class="section-column">
-      <!-- Settings & Status Section -->
       <div class="section">
         <div class="section-title">System</div>
         <button class="btn-settings" onclick="openSettings()">Settings</button>
@@ -574,12 +570,12 @@ function unlockMotors() {
     if (slider) slider.disabled = false;
   }
 }
-function move(dir) { 
+function move(dir) {
   if (!canSendCommand()) return;
   incrementQueue();
-  fetch('/cmd?go=' + dir).catch(console.log); 
+  fetch('/cmd?go=' + dir).catch(console.log);
 }
-function stop() { 
+function stop() {
   commandQueue = 0;
   updateQueueStatus();
   if (lockInterruptible) unlockMotors();
@@ -649,8 +645,8 @@ function openSettings() {
     applyTheme(this.value);
   });
 }
-function closeSettings() { 
-  document.getElementById('settingsPanel').style.display = 'none'; 
+function closeSettings() {
+  document.getElementById('settingsPanel').style.display = 'none';
 }
 function openMotorControl() {
   document.getElementById('motorControlPanel').style.display = 'block';
@@ -699,7 +695,7 @@ function loadWifiStatus() {
     if (d.connected) {
       el.appendChild(document.createTextNode('Connected to '));
       const b = document.createElement('b');
-      b.textContent = d.ssid;            
+      b.textContent = d.ssid;
       el.appendChild(b);
       el.appendChild(document.createTextNode(' — '));
       appendRobotAddress(el, d);
@@ -800,24 +796,24 @@ let lastAxisDir = { x: 0, y: 0 };
 const axisThreshold = 0.5;
 const pollIntervalMs = 80;
 const buttonBindings = {
-  0: () => pose('stand'),   
-  1: () => pose('wave'),    
-  2: () => pose('dance'),   
-  3: () => pose('swim'),    
-  4: () => pose('point'),   
-  5: () => pose('pushup'),  
-  6: () => pose('bow'),     
-  7: () => pose('shake'),   
-  8: () => stop(),          
-  9: () => pose('rest'),    
-  10: () => pose('cute'),   
-  11: () => pose('freaky'), 
+  0: () => pose('stand'),
+  1: () => pose('wave'),
+  2: () => pose('dance'),
+  3: () => pose('swim'),
+  4: () => pose('point'),
+  5: () => pose('pushup'),
+  6: () => pose('bow'),
+  7: () => pose('shake'),
+  8: () => stop(),
+  9: () => pose('rest'),
+  10: () => pose('cute'),
+  11: () => pose('freaky'),
   12: () => move('forward'),
   13: () => move('backward'),
-  14: () => move('left'),   
-  15: () => move('right'),  
-  16: () => stop(),         
-  17: () => pose('worm')    
+  14: () => move('left'),
+  15: () => move('right'),
+  16: () => stop(),
+  17: () => pose('worm')
 };
 const buttonReleaseStop = new Set([12, 13, 14, 15]);
 function updateGamepadStatus(connected) {

@@ -7,8 +7,8 @@ extern const unsigned char* const* currentFaceFrames;
 extern uint8_t currentFaceFrameCount;
 extern uint8_t currentFaceFrameIndex;
 void updateFaceBitmap(const unsigned char* bitmap);
-const int PD_FRAME_MS = 70;      
-const float PD_SPIN_STEP = 0.08f; 
+const int PD_FRAME_MS = 70;
+const float PD_SPIN_STEP = 0.08f;
 enum PlanetDisplayType : int8_t { PD_NONE = -1, PD_EARTH = 0, PD_MARS = 1, PD_MOON = 2, PD_JUPITER = 3 };
 const unsigned char PD_EARTH_MAP[] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -460,26 +460,26 @@ inline bool pdTexel(PlanetDisplayType type, int sx, int sy, float lat, float lon
   }
   if (type == PD_MARS || type == PD_MOON) {
     float L = pdWrapPi(lon);
-    if (L > PI / 2) L = PI - L;          
+    if (L > PI / 2) L = PI - L;
     else if (L < -PI / 2) L = -PI - L;
-    float scale = (type == PD_MARS) ? 87.0f : 84.0f;   
+    float scale = (type == PD_MARS) ? 87.0f : 84.0f;
     int u = (int)(88.0f + cosf(lat) * sinf(L) * scale + 0.5f);
     int v = (int)(88.0f - sinf(lat) * scale + 0.5f);
     const unsigned char* src = (type == PD_MARS) ? PD_MARS_SRC : PD_MOON_SRC;
     int n = 0;
-    for (int dy = -1; dy <= 1; dy++) {   
+    for (int dy = -1; dy <= 1; dy++) {
       for (int dx = -1; dx <= 1; dx++) {
         int xx = u + dx, yy = v + dy;
         if (xx < 0 || xx > 175 || yy < 0 || yy > 175) continue;
         if (pgm_read_byte(&src[yy * 22 + (xx >> 3)]) & (0x80 >> (xx & 7))) n++;
       }
     }
-    if (type == PD_MARS) return n >= 2;  
-    float g = (n / 9.0f - 0.22f) / 0.56f; 
+    if (type == PD_MARS) return n >= 2;
+    float g = (n / 9.0f - 0.22f) / 0.56f;
     return g > (PD_BAYER4[sy & 3][sx & 3] + 0.5f) / 16.0f;
   }
   float L = pdWrapPi(lon);
-  {   
+  {
     float dl = pdWrapPi(L - 1.0f) * cosf(lat) / 0.30f;
     float dt = (lat + 22.0f * PD_DEG) / 0.15f;
     float e = dl * dl + dt * dt;
@@ -496,7 +496,7 @@ inline bool pdTexel(PlanetDisplayType type, int sx, int sy, float lat, float lon
 }
 inline void pdDrawSphere(PlanetDisplayType type, float spin) {
   const int cx = 64, cy = 32, r = 30;
-  if (type != PD_MOON) display.drawCircle(cx, cy, r + 1, SSD1306_WHITE);   
+  if (type != PD_MOON) display.drawCircle(cx, cy, r + 1, SSD1306_WHITE);
   for (int py = -r; py <= r; py++) {
     for (int pxl = -r; pxl <= r; pxl++) {
       float x = pxl / (float)r;
@@ -531,7 +531,7 @@ bool planetDisplayStart(const char* name) {
   if (t == PD_NONE) return false;
   pdType = t;
   pdSpin = 0;
-  pdLastMs = millis() - PD_FRAME_MS;   
+  pdLastMs = millis() - PD_FRAME_MS;
   planetDisplayUpdate();
   return true;
 }
