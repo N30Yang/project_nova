@@ -182,9 +182,9 @@ const LOGO = (() => {
   [...o1, ...o2].forEach(k => back.set(k, '#07030a'));
   const face = P.map(([x, y]) => {
     let edge = 0;
-    if (!has(x, y - 1) || !has(x - 1, y)) edge = 1;                     
-    else if (!has(x, y + 1) || !has(x + 1, y)) edge = 2;                
-    else if (y - PAD > gh * 0.55 && y - PAD < gh * 0.6) edge = 1;       
+    if (!has(x, y - 1) || !has(x - 1, y)) edge = 1;
+    else if (!has(x, y + 1) || !has(x + 1, y)) edge = 2;
+    else if (y - PAD > gh * 0.55 && y - PAD < gh * 0.6) edge = 1;
     return { x, y, f: (x - x0) / (x1 - x0) * 0.85 + (y - PAD) / gh * 0.15, edge };
   });
   return { W, H, back, face, x1, top: PAD, bottom: PAD + gh };
@@ -205,7 +205,7 @@ const LOGO = (() => {
   const toPx = ([r, g, b]) => 0xff000000 | (b & 255) << 16 | (g & 255) << 8 | (r & 255);
   const colourAt = (f, x, y) => {
     let p = ((f % 1) + 1) % 1 * LOOP.length, i = Math.floor(p);
-    if (p - i > 0.55 && (x + y) % 2 === 0) i++;          
+    if (p - i > 0.55 && (x + y) % 2 === 0) i++;
     return LOOP[i % LOOP.length];
   };
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -236,7 +236,7 @@ const LOGO = (() => {
   }
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000 || 0);
-    if (now - last >= 50) {                                
+    if (now - last >= 50) {
       last = now;
       if (!still) offset += dt * 0.05 + burst * dt * 1.6;
       burst = Math.max(0, burst - dt * 1.7);

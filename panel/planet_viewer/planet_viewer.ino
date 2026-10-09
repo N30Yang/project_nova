@@ -4,7 +4,7 @@
 #include <ESP32Servo.h>
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 Servo myServo;
-const int SERVO_PIN = 18;   
+const int SERVO_PIN = 18;
 const unsigned char worldMap[] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -449,7 +449,7 @@ void drawRock(int cx, int cy, int s) {
       if (d2 > (s + 0.5) * (s + 0.5)) continue;
       int x = cx + dx, y = cy + dy;
       if (x < 0 || x > 127 || y < 0 || y > 63) continue;
-      u8g2.setDrawColor(d2 >= (s - 0.5) * (s - 0.5) ? 1 : 0);  
+      u8g2.setDrawColor(d2 >= (s - 0.5) * (s - 0.5) ? 1 : 0);
       u8g2.drawPixel(x, y);
     }
   }
@@ -460,13 +460,13 @@ void px(int x, int y) {
 }
 const float DEG = 0.0174533;
 const float jupBands[][2] = {
-  { 62, 1}, { 50, 2}, { 40, 1}, { 31, 2}, { 24, 1},   
-  { 17, 3},                                            
-  {  7, 0},                                            
-  { -7, 3},                                            
-  {-20, 0},                                            
-  {-27, 3},                                            
-  {-35, 1}, {-45, 2}, {-58, 1}, {-68, 2}, {-91, 1}    
+  { 62, 1}, { 50, 2}, { 40, 1}, { 31, 2}, { 24, 1},
+  { 17, 3},
+  {  7, 0},
+  { -7, 3},
+  {-20, 0},
+  {-27, 3},
+  {-35, 1}, {-45, 2}, {-58, 1}, {-68, 2}, {-91, 1}
 };
 const int NUM_JBANDS = sizeof(jupBands) / sizeof(jupBands[0]);
 float wrapPi(float a) {
@@ -476,23 +476,23 @@ float wrapPi(float a) {
 }
 bool texel(int type, int sx, int sy, float lat, float lon) {
   bool checker = ((sx + sy) & 1) == 0;
-  if (type == 0) {                       
+  if (type == 0) {
     int col = (int)((lon / (2 * PI) + 0.5) * 128);
     col = ((col % 128) + 128) % 128;
     int row = (int)((0.5 - lat / PI) * 64);
     if (row < 0) row = 0;
     if (row > 63) row = 63;
     uint8_t b = pgm_read_byte(&worldMap[row * 16 + col / 8]);
-    return b & (0x80 >> (col % 8));                     
+    return b & (0x80 >> (col % 8));
   }
-  if (type == 1) {                       
+  if (type == 1) {
     float L = wrapPi(lon);
-    if (L > PI / 2) L = PI - L;          
+    if (L > PI / 2) L = PI - L;
     else if (L < -PI / 2) L = -PI - L;
     int u = (int)(88.0 + cos(lat) * sin(L) * 87.0 + 0.5);
     int v = (int)(88.0 - sin(lat) * 87.0 + 0.5);
     int n = 0;
-    for (int dy = -1; dy <= 1; dy++) {   
+    for (int dy = -1; dy <= 1; dy++) {
       for (int dx = -1; dx <= 1; dx++) {
         int xx = u + dx, yy = v + dy;
         if (xx < 0 || xx > 175 || yy < 0 || yy > 175) continue;
@@ -501,14 +501,14 @@ bool texel(int type, int sx, int sy, float lat, float lon) {
     }
     return n >= 2;
   }
-  if (type == 2) {                       
+  if (type == 2) {
     float L = wrapPi(lon);
-    if (L > PI / 2) L = PI - L;          
+    if (L > PI / 2) L = PI - L;
     else if (L < -PI / 2) L = -PI - L;
     int u = (int)(88.0 + cos(lat) * sin(L) * 84.0 + 0.5);
     int v = (int)(88.0 - sin(lat) * 84.0 + 0.5);
     int n = 0;
-    for (int dy = -1; dy <= 1; dy++) {   
+    for (int dy = -1; dy <= 1; dy++) {
       for (int dx = -1; dx <= 1; dx++) {
         int xx = u + dx, yy = v + dy;
         if (xx < 0 || xx > 175 || yy < 0 || yy > 175) continue;
@@ -518,7 +518,7 @@ bool texel(int type, int sx, int sy, float lat, float lon) {
     float g = (n / 9.0 - 0.22) / 0.56;
     return g > (bayer4[sy & 3][sx & 3] + 0.5) / 16.0;
   }
-  if (type == 4) {                       
+  if (type == 4) {
     float L = wrapPi(lon);
     {
       float dl = wrapPi(L - 1.0) * cos(lat) / 0.30;
@@ -533,7 +533,7 @@ bool texel(int type, int sx, int sy, float lat, float lon) {
     for (int i = 0; i < NUM_JBANDS; i++) {
       if (d > jupBands[i][0]) { level = (int)jupBands[i][1]; break; }
     }
-    return level >= 2;                               
+    return level >= 2;
   }
   if (fabs(lat) > 1.2) return false;
   float v = sin(lat * 9.0 + 0.3 * sin(lon * 2.0));
@@ -560,7 +560,7 @@ void drawRing(int cx, int cy, int rx, int ry, int planetR, bool front, float spi
   for (float a = 0; a < 2 * PI; a += 0.02) {
     bool isFront = sin(a) > 0;
     if (isFront != front) continue;
-    if (fmod(a + spin, 2 * PI / 7) > 0.55) continue;   
+    if (fmod(a + spin, 2 * PI / 7) > 0.55) continue;
     float ex = rx * cos(a), ey = ry * sin(a);
     int x = cx + ex * ct - ey * st;
     int y = cy + ex * st + ey * ct;
@@ -573,18 +573,18 @@ void drawRing(int cx, int cy, int rx, int ry, int planetR, bool front, float spi
 }
 void setup() {
   u8g2.begin();
-  myServo.setPeriodHertz(50);              
-  myServo.attach(SERVO_PIN, 500, 2400);    
+  myServo.setPeriodHertz(50);
+  myServo.attach(SERVO_PIN, 500, 2400);
   for (int i = 0; i < 4; i++) respawn(rocks[i]);
 }
 void loop() {
   if (millis() - lastSwitch > 6000) {
     planet = (planet + 1) % NUM;
     lastSwitch = millis();
-    myServo.write(planet * 45);            
+    myServo.write(planet * 45);
   }
   u8g2.clearBuffer();
-  if (planet == 3) {                       
+  if (planet == 3) {
     drawSphere(64, 32, 17, 3, rot);
     drawRing(64, 32, 30, 8, 17, false, rot);
     drawRing(64, 32, 30, 8, 17, true, rot);
@@ -599,7 +599,7 @@ void loop() {
     r.y += r.vy;
     if (r.x < -10 || r.y < -10 || r.y > 74) respawn(r);
     int ix = (int)r.x, iy = (int)r.y;
-    for (int k = 2; k <= 8; k += 2) px(ix - r.vx * k, iy - r.vy * k);   
+    for (int k = 2; k <= 8; k += 2) px(ix - r.vx * k, iy - r.vy * k);
     drawRock(ix, iy, r.s);
   }
   u8g2.setFont(u8g2_font_5x7_tr);
