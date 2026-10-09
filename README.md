@@ -1,17 +1,15 @@
 # Project Nova
 
-"My place in space" hackathon demo. A Nova ESP32 quadruped robot acts out how it
-would move under the gravity of the Moon, Mars, Earth and Jupiter, triggered from
-the robot's phone web page.
+Kiwi Hacks Hackathon project by James Street. This follows the prompt of "my place in space".
 
-Nova is built on top of the open-source Nova robot, [dorianborian/sesame-robot](https://github.com/dorianborian/sesame-robot).
+We are building a Nova ESP32 quadruped robot that acts how it would move under the gravity of different planets triggered by its control panel via a phone web page..
 
 ## Layout
 
 | Path | What |
 |---|---|
 | [CHECKLIST.md](CHECKLIST.md) | Everything to do before, during and after the demo |
-| [firmware/](firmware/) | Nova firmware files (modified upstream Nova firmware) (planet animations, web buttons, serial shortcuts) |
+| [firmware/](firmware/) | Nova firmware files (planet animations, web buttons, serial shortcuts) |
 | [panel/](panel/) | OLED planet-viewer sketch (Earth, Mars, Moon, Saturn, Jupiter) with servo |
 | [panel/controller_template.html](panel/controller_template.html) | The Nova control panel: built into the firmware and served at http://192.168.4.1 |
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
