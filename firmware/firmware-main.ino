@@ -9,6 +9,7 @@
 #include "face-bitmaps.h"
 #include "movement-sequences.h"
 #include "captive-portal.h"
+#include "control-panel.h"
 #define AP_SSID  "Nova-Controller"
 #define AP_PASS  "12345678" 
 #define NETWORK_SSID ""  
@@ -152,6 +153,7 @@ void handleWifiScan();
 void handleWifiConnect();
 void handleWifiStatus();
 void handleNotFound();
+void handleClassic();
 void handlePreflight();
 String jsonEscape(const String& s);
 bool startMdns();
@@ -161,6 +163,9 @@ void showWifiInfoNow();
 void updateWifiSetup();
 void finishWifiSetup(const String& err);
 void handleRoot() {
+  server.send(200, "text/html", panel_html);
+}
+void handleClassic() {
   server.send(200, "text/html", index_html);
 }
 void handleCommandWeb() {
@@ -550,6 +555,7 @@ void setup() {
   };
   for (const char* path : corsPaths) server.on(path, HTTP_OPTIONS, handlePreflight);
   server.on("/", handleRoot);
+  server.on("/classic", handleClassic);
   server.on("/cmd", handleCommandWeb);
   server.on("/getSettings", handleGetSettings);
   server.on("/setSettings", handleSetSettings);
