@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
 Servo servos[8];
-const int servoPins[8] = {1, 2, 4, 6, 8, 10, 13, 14};
-const int MIN_PULSE = 732;
-const int MAX_PULSE = 2929;
+const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};
+const int MIN_PULSE = 544;
+const int MAX_PULSE = 2400;
 void setup() {
   Serial.begin(115200);
   while (!Serial);

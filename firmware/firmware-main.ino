@@ -20,8 +20,8 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 #define OLED_I2C_ADDR 0x3C
-#define I2C_SDA 33
-#define I2C_SCL 35
+#define I2C_SDA 21
+#define I2C_SCL 22
 DNSServer dnsServer;
 const byte DNS_PORT = 53;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -62,7 +62,9 @@ bool wifiRestoreApOnly = false;
 const uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
 const uint32_t WIFI_SETUP_START_DELAY_MS = 300;  
 Servo servos[8];
-const int servoPins[8] = {1, 2, 4, 6, 8, 10, 13, 14};
+const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};
+const int SERVO_MIN_PULSE_US = 544;
+const int SERVO_MAX_PULSE_US = 2400;
 int8_t servoSubtrim[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int frameDelay = 100;
 int walkCycles = 10;
@@ -164,10 +166,10 @@ void showWifiInfoNow();
 void updateWifiSetup();
 void finishWifiSetup(const String& err);
 void handleRoot() {
-  server.send(200, "text/html", panel_html);
+  server.send_P(200, "text/html", panel_html);
 }
 void handleClassic() {
-  server.send(200, "text/html", index_html);
+  server.send_P(200, "text/html", index_html);
 }
 void handleCommandWeb() {
   if (server.hasArg("pose")) {
@@ -216,11 +218,36 @@ void handleGetSettings() {
   json += "}";
   server.send(200, "application/json", json);
 }
+bool readSetting(const char* name, long minVal, long maxVal, int& out) {
+  String raw = server.arg(name);
+  raw.trim();
+  if (raw.length() == 0 || raw.length() > 6) return false;
+  for (unsigned int i = 0; i < raw.length(); i++) {
+    if (!isDigit(raw[i])) return false;
+  }
+  long value = raw.toInt();
+  if (value < minVal || value > maxVal) return false;
+  out = (int)value;
+  return true;
+}
 void handleSetSettings() {
-  if (server.hasArg("frameDelay")) frameDelay = server.arg("frameDelay").toInt();
-  if (server.hasArg("walkCycles")) walkCycles = server.arg("walkCycles").toInt();
-  if (server.hasArg("motorCurrentDelay")) motorCurrentDelay = server.arg("motorCurrentDelay").toInt();
-  if (server.hasArg("faceFps")) faceFps = (int)max(1L, server.arg("faceFps").toInt());
+  int newFrameDelay = frameDelay;
+  int newWalkCycles = walkCycles;
+  int newMotorCurrentDelay = motorCurrentDelay;
+  int newFaceFps = faceFps;
+  bool ok = true;
+  if (server.hasArg("frameDelay")) ok = readSetting("frameDelay", 1, 1000, newFrameDelay) && ok;
+  if (server.hasArg("walkCycles")) ok = readSetting("walkCycles", 1, 50, newWalkCycles) && ok;
+  if (server.hasArg("motorCurrentDelay")) ok = readSetting("motorCurrentDelay", 0, 500, newMotorCurrentDelay) && ok;
+  if (server.hasArg("faceFps")) ok = readSetting("faceFps", 1, 30, newFaceFps) && ok;
+  if (!ok) {
+    server.send(400, "text/plain", "Invalid setting");
+    return;
+  }
+  frameDelay = newFrameDelay;
+  walkCycles = newWalkCycles;
+  motorCurrentDelay = newMotorCurrentDelay;
+  faceFps = newFaceFps;
   server.send(200, "text/plain", "OK");
 }
 void handleGetStatus() {
@@ -573,7 +600,7 @@ void setup() {
   ESP32PWM::allocateTimer(3);
   for (int i = 0; i < 8; i++) {
     servos[i].setPeriodHertz(50);
-    servos[i].attach(servoPins[i], 732, 2929);
+    servos[i].attach(servoPins[i], SERVO_MIN_PULSE_US, SERVO_MAX_PULSE_US);
   }
   delay(10);
   setFace("rest");
