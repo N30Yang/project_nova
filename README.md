@@ -12,6 +12,7 @@ Built on top of [dorianborian/sesame-robot](https://github.com/dorianborian/sesa
 |---|---|
 | [CHECKLIST.md](CHECKLIST.md) | Everything to do before, during and after the demo |
 | [firmware/](firmware/) | Modified Nova firmware files (planet animations, web buttons, serial shortcuts) |
+| [panel/](panel/) | OLED planet-viewer sketch (Earth, Mars, Moon, Saturn, Jupiter) with servo |
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
 | [tools/planet-sim/](tools/planet-sim/) | Offline simulator that runs the real animation code against a fake clock |
 
