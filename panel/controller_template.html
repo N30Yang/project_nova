@@ -17,6 +17,8 @@ main { padding-bottom: 96px; }
 button { font: inherit; color: var(--text); background: var(--raise); border: 2px solid var(--line); border-radius: 0; padding: 8px; min-height: 48px; cursor: pointer; touch-action: manipulation; transition: background-color 80ms, border-color 80ms; }
 button:active { background: #232b37; border-color: #4b5667; }
 :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+a { color: var(--acc); }
+#link { margin: 12px 0 0; padding: 8px; color: var(--stop); border: 2px solid #5c3a33; }
 svg { shape-rendering: crispEdges; fill: currentColor; flex: none; }
 svg.i { width: 16px; height: 16px; }
 .grid { display: grid; gap: 4px; }
@@ -46,6 +48,7 @@ nav [aria-selected=true] { color: var(--acc); }
 </head>
 <body>
 <main>
+<p id="link" role="status" hidden>Robot not connected. Join the Nova-Controller Wi-Fi, then try again.</p>
 <section id="tab-space">
   <h2>My place in space:</h2>
   <canvas id="screen" width="128" height="64" aria-label="Nova's screen"></canvas>
@@ -69,6 +72,7 @@ nav [aria-selected=true] { color: var(--acc); }
       <div class="step" data-key="motorAngle" data-min="0" data-max="180" data-inc="10"><button aria-label="Less">-</button><output>90</output><button aria-label="More">+</button></div>
       <button id="motor-set">Set</button></div>
   </details>
+  <p><a id="classic" href="/classic">Wi-Fi settings and classic controls</a></p>
 </section>
 </main>
 <nav><div role="tablist">
@@ -108,8 +112,19 @@ function pixelSvg(rows, cls) {
 document.querySelectorAll('i[data-icon]').forEach(i => i.replaceWith(pixelSvg(ICONS[i.dataset.icon], 'i')));
 const state = { command: '', settings: {}, motors: {}, motorAngle: 90 };
 const $ = id => document.getElementById(id);
+const ROBOT = location.protocol === 'file:' ? 'http://192.168.4.1' : '';
+function robotPath(name, value) {
+  switch (name) {
+    case 'go':      return '/cmd?go=' + encodeURIComponent(value);
+    case 'pose':    return '/cmd?pose=' + encodeURIComponent(value);
+    case 'stop':    return '/cmd?stop=1';
+    case 'setting': return '/setSettings?' + encodeURIComponent(value.key) + '=' + encodeURIComponent(value.value);
+    case 'motor':   return '/cmd?motor=' + value.motor + '&value=' + value.angle;
+  }
+  return null;
+}
+function setLink(ok) { $('link').hidden = ok; }
 function sendCommand(name, value) {
-  console.log('sendCommand', name, value);
   switch (name) {
     case 'go': case 'pose': state.command = value; break;
     case 'stop': state.command = ''; break;
@@ -118,6 +133,11 @@ function sendCommand(name, value) {
   }
   if (TIMELINE[state.command]) play(state.command);
   else if (name !== 'setting' && name !== 'motor') stopPlayback();
+  const path = robotPath(name, value);
+  if (!path) return;
+  fetch(ROBOT + path)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); setLink(true); })
+    .catch(() => setLink(false));
 }
 const ctx = $('screen').getContext('2d');
 const img = ctx.createImageData(128, 64);
@@ -199,6 +219,7 @@ document.querySelectorAll('nav button').forEach(b => { b.onclick = () => { showT
 let first = location.hash.slice(1);
 try { first = first || localStorage.getItem('tab'); } catch (e) {}
 showTab(first === 'robot' ? 'robot' : 'space');
+$('classic').href = ROBOT + '/classic';
 </script>
 </body>
 </html>
