@@ -8,7 +8,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
   Serial.println("-----------------------------------");
-  Serial.println("   Nova Motor Tester Interface   ");
+  Serial.println("      Motor Tester Interface       ");
   Serial.println("-----------------------------------");
   Serial.println("Commands:");
   Serial.println("1. id,angle   -> e.g. '0,90'");
