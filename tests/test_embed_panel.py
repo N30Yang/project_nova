@@ -17,7 +17,8 @@ def page(tmp_path):
 def test_render_wraps_html_in_raw_string():
     out = embed.render_header(PAGE, "web/panel.html")
     assert 'R"nova_panel(' + PAGE + ')nova_panel";' in out
-    assert "GENERATED" in out and "web/panel.html" in out
+    assert out.startswith("#ifndef CONTROL_PANEL_H")
+    assert "//" not in out.replace(PAGE, "")
 def test_render_rejects_reserved_delimiter():
     with pytest.raises(embed.EmbedError, match="reserved"):
         embed.render_header('x )nova_panel" y', "p.html")
