@@ -22,12 +22,15 @@ We are building a Nova ESP32 quadruped robot that acts how it would move under t
 
 ## Firmware files
 
-The three files below are the ones changed from upstream. `face-bitmaps.h` and
-`debugging-firmware/motor-tester.ino` are unmodified upstream files (Apache-2.0)
-so the repo now builds and flashes on its own: see [docs/firmware-setup.md](docs/firmware-setup.md).
+The files below are the ones changed from upstream. `face-bitmaps.h` is an unmodified upstream
+file (Apache-2.0), included so the repo builds and flashes on its own: see
+[docs/firmware-setup.md](docs/firmware-setup.md). The firmware is set up for the ESP32 Dev Module
+(ESP32-WROOM-32) with SG90 servos only.
 
 - `movement-sequences.h`: the PLANETS block (all tuning numbers at the top)
-- `firmware-main.ino`: `moon`/`mars`/`earth`/`jupiter` dispatch and `rn mo|ma|ea|ju`
+- `firmware-main.ino`: `moon`/`mars`/`earth`/`jupiter` dispatch and `rn mo|ma|ea|ju`, ESP32 Dev
+  Module pins, SG90 pulse range, `/setSettings` rejects negative and out-of-range values
+- `debugging-firmware/motor-tester.ino`: ESP32 Dev Module pins, SG90 pulse range
 - `captive-portal.h`: Planets buttons, slider lock fix on STOP
 - `planet-display.h` (new): while a planet pose runs, the OLED shows that planet spinning instead of the
   robot's face. When the pose ends or STOP is pressed the normal face returns. Textures and the sphere

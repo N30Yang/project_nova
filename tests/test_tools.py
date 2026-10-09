@@ -27,12 +27,19 @@ class TestPatchPins:
         assert "#define I2C_SDA 21" in active
         assert "#define I2C_SCL 22" in active
         assert "const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};" in active
-    def test_s2mini_keeps_repo_defaults(self):
-        out = firmware.patch_pins(self.source(), firmware.BOARDS["s2mini"])
-        active = active_lines(out)
-        assert "#define I2C_SDA 33" in active
-        assert "#define I2C_SCL 35" in active
-        assert "const int servoPins[8] = {1, 2, 4, 6, 8, 10, 13, 14};" in active
+    def test_repo_defaults_are_devkit_pins(self):
+        active = active_lines(self.source())
+        assert "#define I2C_SDA 21" in active
+        assert "#define I2C_SCL 22" in active
+        assert "const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};" in active
+    def test_other_board_pins_are_replaced(self):
+        src = "#define I2C_SDA 33\n#define I2C_SCL 35\nconst int servoPins[8] = {1, 2, 4, 6, 8, 10, 13, 14};\n"
+        active = active_lines(firmware.patch_pins(src, firmware.BOARDS["devkit"]))
+        assert active == [
+            "#define I2C_SDA 21",
+            "#define I2C_SCL 22",
+            "const int servoPins[8] = {15, 2, 23, 19, 4, 16, 17, 18};",
+        ]
     def test_exactly_one_definition_of_each_remains(self):
         out = firmware.patch_pins(self.source(), firmware.BOARDS["devkit"])
         assert out.count("#define I2C_SDA") == 1
@@ -179,7 +186,7 @@ class TestCliCommands:
         assert firmware.main(["upload", "--board", "devkit"]) == 1
         assert "--port is required" in capsys.readouterr().err
     def test_upload_passes_port(self, calls):
-        assert firmware.main(["upload", "--board", "s2mini", "--port", "COM5"]) == 0
+        assert firmware.main(["upload", "--port", "COM5"]) == 0
         assert "--upload" in calls[-1] and "COM5" in calls[-1]
     def test_motors_flashes_tester(self, calls, capsys):
         assert firmware.main(["motors", "--board", "devkit", "--port", "COM5"]) == 0

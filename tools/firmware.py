@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Set up, build and flash the Nova firmware with arduino-cli.
 The firmware sources in firmware/ are never modified. For each build the
-sketch is copied to a temp folder and the board pin block is patched in the
-copy only.
+sketch is copied to a temp folder and the pin block is written into the copy,
+so the build always uses the ESP32 Dev Module pins.
     python tools/firmware.py setup
     python tools/firmware.py ports
     python tools/firmware.py build  --board devkit
@@ -45,7 +45,6 @@ class Board:
     sda: int
     scl: int
 BOARDS = {
-    "s2mini": Board("esp32:esp32:lolin_s2_mini", (1, 2, 4, 6, 8, 10, 13, 14), 33, 35),
     "devkit": Board("esp32:esp32:esp32", (15, 2, 23, 19, 4, 16, 17, 18), 21, 22),
 }
 PIN_LINE_PATTERNS = {
@@ -202,7 +201,7 @@ def build_parser() -> argparse.ArgumentParser:
         ("motors", cmd_motors, "flash the servo motor tester"),
     ):
         p = sub.add_parser(name, help=helptext)
-        p.add_argument("--board", choices=sorted(BOARDS), required=True)
+        p.add_argument("--board", choices=sorted(BOARDS), default="devkit")
         p.add_argument("--port", help="serial port, e.g. COM5 or /dev/ttyUSB0")
         p.set_defaults(func=func)
     return parser
