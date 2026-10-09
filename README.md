@@ -16,6 +16,7 @@ Nova is built on top of the open-source Nova robot, [dorianborian/sesame-robot](
 | [docs/planet-notes.md](docs/planet-notes.md) | Gravity model, tuning numbers, durations |
 | [docs/firmware-setup.md](docs/firmware-setup.md) | Install toolchain, pick board pins, build, flash, Wi-Fi, API test |
 | [docs/motor-testing.md](docs/motor-testing.md) | Servo test and leg calibration before assembly |
+| [docs/control-panel.md](docs/control-panel.md) | Control the robot from your own HTML panel (API, CORS, what works) |
 | [tools/firmware.py](tools/firmware.py), [tools/api-test.py](tools/api-test.py) | Setup/build/flash script and JSON API smoke test |
 | [tests/](tests/) | pytest tests for the tools (`python -m pytest tests`) |
 | [tools/planet-sim/](tools/planet-sim/) | Offline simulator that runs the real animation code against a fake clock |

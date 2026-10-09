@@ -103,6 +103,11 @@ class MockRobot(BaseHTTPRequestHandler):
             self.reply({"currentCommand": "stop", "currentFace": "default"})
         else:
             self.reply({}, 404)
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(length).decode()
@@ -284,3 +289,28 @@ class TestApiFailures:
             raise KeyboardInterrupt
         monkeypatch.setattr(api_test, "run", boom)
         assert api_test.main([]) == 130
+class NoCorsRobot(MockRobot):
+    """Old firmware: OPTIONS falls into the POST-only handler and gets 405."""
+    def do_OPTIONS(self):
+        self.reply({"error": "Method not allowed"}, 405)
+class CorsWithoutHeader(MockRobot):
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+class TestCors:
+    def test_cors_ok(self, robot, capsys):
+        api_test.check_cors(f"http://{robot}")
+        assert "CORS OK" in capsys.readouterr().out
+    @pytest.mark.parametrize("handler,needle", [(NoCorsRobot, "HTTP 405"), (CorsWithoutHeader, "no Access-Control")])
+    def test_cors_failures_tell_user_to_reflash(self, handler, needle):
+        server = serve(handler)
+        try:
+            with pytest.raises(api_test.ApiError, match=needle):
+                api_test.check_cors(f"http://127.0.0.1:{server.server_port}")
+        finally:
+            server.shutdown()
+            server.server_close()
+    def test_unreachable(self):
+        with pytest.raises(api_test.ApiError, match="cannot reach"):
+            api_test.check_cors("http://127.0.0.1:1")

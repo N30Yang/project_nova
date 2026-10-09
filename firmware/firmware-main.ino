@@ -152,6 +152,7 @@ void handleWifiScan();
 void handleWifiConnect();
 void handleWifiStatus();
 void handleNotFound();
+void handlePreflight();
 String jsonEscape(const String& s);
 bool startMdns();
 void announceNetwork(const String& ssid);
@@ -489,7 +490,15 @@ void handleWifiStatus() {
   json += "}";
   server.send(200, "application/json", json);
 }
+void handlePreflight() {
+  server.sendHeader("Access-Control-Allow-Private-Network", "true");
+  server.send(204, "text/plain", "");
+}
 void handleNotFound() {
+  if (server.method() == HTTP_OPTIONS) {
+    handlePreflight();
+    return;
+  }
   if (server.uri().startsWith("/api/")) {
     server.send(404, "application/json", "{\"error\":\"Not found\"}");
     return;
@@ -534,6 +543,12 @@ void setup() {
   firstInputReceived = false;
   showingWifiInfo = false;
   dnsServer.start(DNS_PORT, "*", myIP);
+  server.enableCORS(true);
+  static const char* const corsPaths[] = {
+    "/cmd", "/getSettings", "/setSettings", "/api/status", "/api/command",
+    "/api/wifi/scan", "/api/wifi/connect", "/api/wifi/status"
+  };
+  for (const char* path : corsPaths) server.on(path, HTTP_OPTIONS, handlePreflight);
   server.on("/", handleRoot);
   server.on("/cmd", handleCommandWeb);
   server.on("/getSettings", handleGetSettings);

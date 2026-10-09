@@ -18,6 +18,7 @@ from typing import Any, Optional, Sequence
 DEFAULT_HOST = "192.168.4.1"
 TIMEOUT_SECONDS = 5
 SETTLE_SECONDS = 3
+PANEL_ORIGIN = "http://panel.test"
 OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 class ApiError(Exception):
     """The robot could not be reached or answered with an error."""
@@ -39,6 +40,27 @@ def request_json(url: str, payload: Optional[dict[str, Any]] = None) -> dict[str
 def send(base: str, payload: dict[str, Any]) -> None:
     reply = request_json(f"{base}/api/command", payload)
     print(f"  POST {payload} -> {reply}")
+def check_cors(base: str) -> None:
+    """Confirm an external HTML panel may call the API (preflight + Allow-Origin)."""
+    req = urllib.request.Request(
+        f"{base}/api/command",
+        method="OPTIONS",
+        headers={
+            "Origin": PANEL_ORIGIN,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    try:
+        with OPENER.open(req, timeout=TIMEOUT_SECONDS) as resp:
+            allowed = resp.headers.get("Access-Control-Allow-Origin")
+    except urllib.error.HTTPError as err:
+        raise ApiError(f"CORS preflight rejected with HTTP {err.code}; reflash the latest firmware") from err
+    except (urllib.error.URLError, TimeoutError, OSError) as err:
+        raise ApiError(f"cannot reach {base} for the CORS check ({err})") from err
+    if allowed not in ("*", PANEL_ORIGIN):
+        raise ApiError("robot sends no Access-Control-Allow-Origin header; reflash the latest firmware")
+    print(f"  CORS OK (Access-Control-Allow-Origin: {allowed})")
 def stop_quietly(base: str) -> None:
     """Best-effort stop so a failed test never leaves the robot moving."""
     try:
@@ -48,6 +70,8 @@ def stop_quietly(base: str) -> None:
 def run(base: str, *, move: bool, command: Optional[str]) -> None:
     print("GET /api/status")
     print(f"  {request_json(f'{base}/api/status')}")
+    print("CORS preflight (needed by an external control panel)")
+    check_cors(base)
     print("Face-only update (robot should not move)")
     send(base, {"face": "happy"})
     time.sleep(SETTLE_SECONDS)
